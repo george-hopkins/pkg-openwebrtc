@@ -1,0 +1,22 @@
+Source: openwebrtc
+Priority: optional
+Maintainer: George Hopkins <george-hopkins@null.net>
+Build-Depends:
+    debhelper (>= 8.0.0)
+Standards-Version: 3.9.4
+Section: libs
+Homepage: <http://www.openwebrtc.org/>
+Vcs-Git: https://github.com/george-hopkins/pkg-openwebrtc.git
+Vcs-Browser: https://github.com/george-hopkins/pkg-openwebrtc
+
+Package: openwebrtc-dev
+Section: libdevel
+Architecture: any
+Depends:
+Description: WebRTC client framework (development files)
+
+Package: openwebrtc-java
+Section: libs
+Architecture: i386 amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: WebRTC client framework (Java bindings)

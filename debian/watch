@@ -1,0 +1,3 @@
+version=3
+
+https://github.com/EricssonResearch/openwebrtc/releases .*/openwebrtc-(.*)-linux-sources\.tar\.bz2
