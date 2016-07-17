@@ -1,6 +1,6 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: openwebrtc
-Source: <http://www.openwebrtc.org/>
+Source: <http://www.openwebrtc.org>
 
 Files: *
 Copyright: 2014-2015 Ericsson AB

@@ -2,21 +2,34 @@ Source: openwebrtc
 Priority: optional
 Maintainer: George Hopkins <george-hopkins@null.net>
 Build-Depends:
-    debhelper (>= 8.0.0)
-Standards-Version: 3.9.4
+ debhelper (>= 9),
+ dh-autoreconf,
+ gtk-doc-tools,
+ libgstreamer-plugins-base1.0-dev,
+ libgstreamer-plugins-bad1.0-dev,
+ libnice-dev,
+ libgstsctp-dev,
+ liborc-0.4-dev,
+ libssl-dev,
+ libjson-glib-dev,
+ libpulse-dev,
+ libpulse-mainloop-glib0,
+ libgles2-mesa-dev,
+ mesa-common-dev
+Standards-Version: 3.9.7
 Section: libs
-Homepage: <http://www.openwebrtc.org/>
+Homepage: <http://www.openwebrtc.org>
 Vcs-Git: https://github.com/george-hopkins/pkg-openwebrtc.git
 Vcs-Browser: https://github.com/george-hopkins/pkg-openwebrtc
 
-Package: openwebrtc-dev
-Section: libdevel
-Architecture: any
-Depends:
-Description: WebRTC client framework (development files)
-
-Package: openwebrtc-java
+Package: libopenwebrtc
 Section: libs
 Architecture: i386 amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: WebRTC client framework (Java bindings)
+Description: WebRTC client framework
+
+Package: libopenwebrtc-dev
+Section: libdevel
+Architecture: any
+Depends: libopenwebrtc (= ${binary:Version})
+Description: WebRTC client framework (development files)
