@@ -1,0 +1,195 @@
+From: George Hopkins <george-hopkins@null.net>
+Date: Sun, 17 Jul 2016 19:55:57 +0200
+Subject: Setup Java
+
+---
+ bindings/java/Makefile.am       |  4 +--
+ bindings/java/c_generator.py    |  9 +++++-
+ bindings/java/gen_jni.py        |  5 ++--
+ bindings/java/java_generator.py |  2 +-
+ configure.ac                    | 63 -----------------------------------------
+ transport/owr_crypto_utils.c    |  4 +--
+ 6 files changed, 14 insertions(+), 73 deletions(-)
+
+diff --git a/bindings/java/Makefile.am b/bindings/java/Makefile.am
+index 7947c2f..f979dff 100644
+--- a/bindings/java/Makefile.am
++++ b/bindings/java/Makefile.am
+@@ -2,7 +2,8 @@
+ 
+ AM_CPPFLAGS = \
+ 	$(GLIB_CFLAGS) \
+-	-I$(ANDROID_NDK_PREFIX)/include \
++	-I$(JAVA_HOME)/include \
++	-I$(JAVA_HOME)/include/linux \
+ 	-I$(top_srcdir)/owr \
+ 	-I$(top_srcdir)/bridge \
+ 	-I$(top_srcdir)/transport \
+@@ -21,7 +22,6 @@ endif
+ 
+ libopenwebrtc_jni_la_SOURCES = owr_jni.c
+ libopenwebrtc_jni_la_LIBADD = \
+-	-L$(ANDROID_NDK_PREFIX)/lib -landroid \
+ 	$(top_builddir)/owr/libopenwebrtc.la
+ 
+ if OWR_BRIDGE
+diff --git a/bindings/java/c_generator.py b/bindings/java/c_generator.py
+index 68065f5..d3472de 100644
+--- a/bindings/java/c_generator.py
++++ b/bindings/java/c_generator.py
+@@ -661,7 +661,7 @@ def gen_source(namespaces, include_headers):
+         ]
+     )
+ 
+-    include_headers = ['jni.h', 'android/log.h'] + include_headers
++    include_headers = ['jni.h'] + include_headers
+     includes = '\n'.join('#include <' + h + '>' for h in include_headers)
+ 
+     body = [
+@@ -682,6 +682,13 @@ def gen_source(namespaces, include_headers):
+ 
+ 
+ HEADER = """
++#define ANDROID_LOG_ERROR 0
++#define ANDROID_LOG_INFO 0
++#define ANDROID_LOG_WARN 0
++#define ANDROID_LOG_DEBUG 0
++#define ANDROID_LOG_VERBOSE 0
++#define __android_log_print(...)
++
+ #define android_assert(st) if (!(st)) {{ __android_log_write(ANDROID_LOG_ERROR, "OpenWebRTC", "Assertion failed at "G_STRINGIFY(__LINE__));}}
+ #undef g_assert
+ #define g_assert android_assert
+diff --git a/bindings/java/gen_jni.py b/bindings/java/gen_jni.py
+index c83c60d..ec0cd9f 100755
+--- a/bindings/java/gen_jni.py
++++ b/bindings/java/gen_jni.py
+@@ -91,7 +91,6 @@ def write_file(content, path, filename):
+ 
+ 
+ HEADERS = [
+-    'android/native_window_jni.h',
+     'owr.h',
+     'owr_audio_payload.h',
+     'owr_audio_renderer.h',
+@@ -120,9 +119,9 @@ HEADERS = [
+ 
+ class WindowHandleType(ObjectMetaType(
+         gir_type='WindowHandle',
+-        java_type='Surface',
++        java_type='Object',
+         c_type='OwrWindowHandle',
+-        package='android.view',
++        package='java.lang',
+     )):
+ 
+     def transform_to_c(self):
+diff --git a/bindings/java/java_generator.py b/bindings/java/java_generator.py
+index f156ecb..78cf062 100644
+--- a/bindings/java/java_generator.py
++++ b/bindings/java/java_generator.py
+@@ -364,7 +364,7 @@ def gen_namespace(namespace):
+         body=[
+             J.Block(
+                 _start='static {',
+-                body=['System.loadLibrary("%s");' % namespace.shared_library[3:-3]],
++                body=['System.load("/usr/lib/jni/libopenwebrtc_jni.so");'],
+             ),
+             '',
+             Method('private', [], namespace.name, body=['']),
+diff --git a/configure.ac b/configure.ac
+index 176503e..22a8c92 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -197,9 +197,6 @@ AC_HELP_STRING(
+ esac],[enable_owr_java=no])
+ AC_MSG_RESULT([$enable_owr_java])
+ if test "x$enable_owr_java" = xyes; then
+-  if test "x$is_android" != xyes; then
+-    AC_MSG_ERROR([--enable-owr-java is only valid when building for Android])
+-  fi
+   if test "x$enable_shared" != xyes; then
+     AC_MSG_ERROR([--enable-owr-java needs --enabled-shared])
+   fi
+@@ -238,66 +235,6 @@ AC_ARG_WITH(javadocdir,
+ AC_MSG_RESULT([$javadocdir])
+ AC_SUBST(javadocdir)
+ 
+-dnl Android SDK path is needed when Java bindings are enabled
+-AC_ARG_WITH(android-sdk,
+-            AS_HELP_STRING([--with-android-sdk],
+-                           [path to the Android SDK]),
+-            androidsdkdir=${withval}, androidsdkdir=)
+-if test "x$enable_owr_java" = xyes; then
+-  AC_MSG_CHECKING([for android.jar])
+-  if test "x$androidsdkdir" = x; then
+-    AC_MSG_ERROR([Need path to the Android SDK when building Android bindings])
+-  fi
+-  ANDROID_CLASSPATH="$androidsdkdir/platforms/android-20/android.jar"
+-  if ! test -f "$ANDROID_CLASSPATH"; then
+-    ANDROID_CLASSPATH="$androidsdkdir/platforms/android-19/android.jar"
+-    if ! test -f "$ANDROID_CLASSPATH"; then
+-      AC_MSG_ERROR([Android SDK API level 19 or 20 not found])
+-    fi
+-  fi
+-  AC_MSG_RESULT([$ANDROID_CLASSPATH])
+-fi
+-AC_SUBST(ANDROID_CLASSPATH)
+-
+-dnl Android NDK path is needed when building for Android
+-AC_ARG_WITH(android-ndk,
+-            AS_HELP_STRING([--with-android-ndk],
+-                           [path to the Android NDK]),
+-            androidndkdir=${withval}, androidndkdir=)
+-if test "x$is_android" = xyes; then
+-  AC_MSG_CHECKING([for the Android NDK prefix])
+-  if test "x$androidndkdir" = x; then
+-    AC_MSG_ERROR([Need path to the Android NDK when building for Android])
+-  fi
+-  case "$target" in
+-    i?86-*|x86_64-*)
+-      ndk_arch=x86;;
+-    arm-*)
+-      ndk_arch=arm;;
+-    mips-*)
+-      ndk_arch=mips;;
+-    *)
+-      AC_MSG_ERROR([Unsupported Android target: $target]);;
+-  esac
+-  if ! test -d "$androidndkdir"; then
+-    AC_MSG_ERROR([Android NDK path $androidndkdir is invalid])
+-  fi
+-  ANDROID_NDK_PREFIX="$androidndkdir/platforms/android-9/arch-$ndk_arch/usr"
+-  if ! test -d "$ANDROID_NDK_PREFIX"; then
+-    AC_MSG_ERROR([Android NDK level 9 not found for arch $ndk_arch])
+-  fi
+-  AC_MSG_RESULT([$ANDROID_NDK_PREFIX])
+-fi
+-AC_SUBST(ANDROID_NDK_PREFIX)
+-
+-if test "x$is_android" = xyes; then
+-  dnl The GNU C++ STL is needed for JNI. This pkg-config file is
+-  dnl only provided by Cerbero.
+-  PKG_CHECK_MODULES(GNU_CXXSTL, [gnustl])
+-
+-  OWR_DEVICE_LIST_EXT_CFLAGS="$OWR_DEVICE_LIST_EXT_CFLAGS $GNU_CXXSTL_CFLAGS"
+-  OWR_DEVICE_LIST_EXT_LIBS="$OWR_DEVICE_LIST_EXT_LIBS $GNU_CXXSTL_LIBS"
+-fi
+ AC_SUBST(OWR_DEVICE_LIST_EXT_CFLAGS)
+ AC_SUBST(OWR_DEVICE_LIST_EXT_LIBS)
+ 
+diff --git a/transport/owr_crypto_utils.c b/transport/owr_crypto_utils.c
+index 785fde8..2eae477 100644
+--- a/transport/owr_crypto_utils.c
++++ b/transport/owr_crypto_utils.c
+@@ -27,9 +27,7 @@
+ \*\ Owr crypto utils
+ /*/
+ 
+-/**
+- * 
+- *
++/*
+  * Functions to get certificate, fingerprint and private key.
+  */
+ 

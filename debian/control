@@ -4,6 +4,7 @@ Maintainer: George Hopkins <george-hopkins@null.net>
 Build-Depends:
  debhelper (>= 9),
  dh-autoreconf,
+ default-jdk,
  gtk-doc-tools,
  libgstreamer-plugins-base1.0-dev,
  libgstreamer-plugins-bad1.0-dev,
@@ -15,7 +16,8 @@ Build-Depends:
  libpulse-dev,
  libpulse-mainloop-glib0,
  libgles2-mesa-dev,
- mesa-common-dev
+ mesa-common-dev,
+ libgirepository1.0-dev
 Standards-Version: 3.9.7
 Section: libs
 Homepage: <http://www.openwebrtc.org>
@@ -33,3 +35,9 @@ Section: libdevel
 Architecture: any
 Depends: libopenwebrtc (= ${binary:Version})
 Description: WebRTC client framework (development files)
+
+Package: libopenwebrtc-java
+Section: java
+Architecture: i386 amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: WebRTC client framework (Java bindings)

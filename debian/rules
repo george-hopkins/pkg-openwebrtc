@@ -4,6 +4,8 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+export JAVA_HOME=/usr/lib/jvm/default-java
+
 %:
 	dh $@ --with autoreconf
 
@@ -11,4 +13,11 @@ override_dh_autoreconf:
 	dh_autoreconf ./autogen.sh -- --noconfigure
 
 override_dh_auto_configure:
-	dh_auto_configure -- --enable-bridge=no
+	dh_auto_configure -- --enable-bridge=no --enable-owr-java --disable-tests
+
+override_dh_install:
+	mkdir -p debian/tmp/usr/share/java
+	mkdir -p debian/tmp/usr/lib/jni
+	find debian/tmp/usr/lib -iname 'openwebrtc.jar' -exec mv {} debian/tmp/usr/share/java/openwebrtc.jar \;
+	find debian/tmp/usr/lib -iname 'libopenwebrtc_jni.so.*.*' -exec mv {} debian/tmp/usr/lib/jni/libopenwebrtc_jni.so \;
+	dh_install
